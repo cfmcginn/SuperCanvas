@@ -1,8 +1,8 @@
 #!/bin/bash
 
-AutoCanv="autoCanv"
+SuperCanvas="SuperCanvas"
 path=$PWD
-rest=${path#*$AutoCanv}
+rest=${path#*$SuperCanvas}
 pos=$(( ${#path} - ${#rest} ))
 path=${path:0:$pos}
 
