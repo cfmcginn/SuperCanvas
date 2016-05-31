@@ -634,7 +634,7 @@ void superCanvas::DrawLegend(TLegend* leg_p)
   leg_p->SetY1(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][1]);
   leg_p->SetY2(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][3]);
   
-  leg_p->Draw("SAME");
+  leg_p->Draw();
 
   return;
 }
