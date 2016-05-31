@@ -42,6 +42,8 @@ class superCanvas{
 
   TLegend* leg_p;
 
+  Bool_t columnIsLogX[maxNDimX];
+  Bool_t rowIsLogY[maxNDimY];
   Bool_t panelHasHist[maxNDimX][maxNDimY];
   Int_t nPanelHists[maxNDimX][maxNDimY];
   Float_t panelWhiteSpace[maxNDimX][maxNDimY][nXYLowHigh];
@@ -95,7 +97,8 @@ class superCanvas{
   Float_t GetYTitleSize(const Int_t);
   Float_t GetYLabelSize(const Int_t);
 
-  void SetPad(TPad*, const Int_t, const Int_t);
+  void SetColumnLogX(const Int_t);
+  void SetRowLogY(const Int_t);
   void SetHist(TH1*, const Int_t, const Int_t, const Int_t);
   void SetGlobalMaxMin(const Bool_t);
   void SetPanelYMaxFactor(const Float_t);
@@ -207,6 +210,14 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
       panelHasHist[iter][iter2] = false;
       nPanelHists[iter][iter2] = 0;
     }
+  }
+
+  for(Int_t iter = 0; iter < nDimX; iter++){
+    columnIsLogX[iter] = false;
+  }
+
+  for(Int_t iter = 0; iter < nDimY; iter++){
+    rowIsLogY[iter] = false;
   }
 
   doGlobalMaxMin = false;
@@ -364,19 +375,29 @@ Float_t superCanvas::GetYLabelSize(const Int_t yPos)
   return leftMargSize*1/3.;
 }
 
-void superCanvas::SetPad(TPad* pad_p, const Int_t xPos, const Int_t yPos)
-{
-  std::string padStr = Form("pad_%d_%d", xPos, yPos);
-  
-  pad_p->SetPad(padStr.c_str(), padStr.c_str(), this->GetPadLowerX(xPos), this->GetPadLowerY(yPos), this->GetPadUpperX(xPos), this->GetPadUpperY(yPos), -1, -1, -2);
-  
-  pad_p->SetLeftMargin(this->GetLeftMarg(xPos));
-  pad_p->SetRightMargin(this->GetRightMarg(xPos));
-  pad_p->SetTopMargin(this->GetTopMarg(yPos));
-  pad_p->SetBottomMargin(this->GetBottomMarg(yPos));
 
-  panelHasHist[xPos][yPos] = false;
-  nPanelHists[xPos][yPos] = 0;
+void superCanvas::SetColumnLogX(const Int_t xPos)
+{
+  if(!isGoodXVal(xPos)) return -1;
+
+  for(Int_t iter = 0; iter < nDimY; iter++){
+    pads_p[xPos][iter]->SetLogx();
+  }
+
+  columnIsLogX[xPos] = true;
+  return;
+}
+
+
+void superCanvas::SetRowLogY(const Int_t yPos)
+{
+  if(!isGoodYVal(yPos)) return -1;
+
+  for(Int_t iter = 0; iter < nDimX; iter++){
+    pads_p[iter][yPos]->SetLogy();
+  }
+
+  rowIsLogY[yPos] = true;
 
   return;
 }
