@@ -164,20 +164,10 @@ void testDefineCanv(const Int_t nDimX, const Int_t nDimY)
       dummyHist_p[iter][iter2]->DrawCopy();
       dummyHist2_p[iter][iter2]->DrawCopy("SAME");
       dummyHist3_p[iter][iter2]->DrawCopy("SAME");
-      //      padPos_p->DrawWhiteSpaceLine(iter, iter2);
     }
   }
 
-  TLegend* leg_p = new TLegend();
-  padPos_p->canv_p->cd();
-  padPos_p->pads_p[padPos_p->GetPanelWhiteSpaceFracMaxXPos()][padPos_p->GetPanelWhiteSpaceFracMaxYPos()]->cd();
-  if(nDimX == 1 && nDimY == 1) padPos_p->pads_p[padPos_p->GetPanelWhiteSpaceFracMaxXPos()][padPos_p->GetPanelWhiteSpaceFracMaxYPos()]->SaveAs("test.ps");
-  if(nDimX == 1 && nDimY == 1) std::remove("test.ps");
-  padPos_p->DrawLegend(leg_p);
-
-  leg_p->AddEntry(dummyHist_p[0][0], "Test", "P L");
-  leg_p->AddEntry(dummyHist2_p[0][0], "Test2", "P L");
-  leg_p->AddEntry(dummyHist3_p[0][0], "Test3", "P L");
+  padPos_p->DrawLegend();
 
   for(Int_t iter = 0; iter < nDimX; iter++){
     if(iter == 0) continue;
@@ -188,18 +178,17 @@ void testDefineCanv(const Int_t nDimX, const Int_t nDimY)
     padPos_p->DrawLabel2(iter, 0, Form("test2 %d", iter));
   }
 
-  checkMakeDir("pdfDir");
-  padPos_p->canv_p->SaveAs(Form("pdfDir/%s.%s", padPos_p->canv_p->GetName(), "pdf"));
-
   checkMakeDir("outFileDir");
   TFile* outFile_p = new TFile("outFileDir/test.root", "UPDATE");
   padPos_p->canv_p->Write("", TObject::kOverwrite);
   outFile_p->Close();
   delete outFile_p;
 
+  checkMakeDir("pdfDir");
+  padPos_p->canv_p->SaveAs(Form("pdfDir/%s.%s", padPos_p->canv_p->GetName(), "pdf"));
+
   for(Int_t iter = 0; iter < nDimX; iter++){
     for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
-      //      delete pads_p[iter][iter2];
       delete dummyHist_p[iter][iter2];
       delete dummyHist2_p[iter][iter2];
       delete dummyHist3_p[iter][iter2];
@@ -214,8 +203,8 @@ void testDefineCanv(const Int_t nDimX, const Int_t nDimY)
 
 void runTestDefineCanv()
 {
-  const Int_t nDimXMax = 8;
-  const Int_t nDimYMax = 7;
+  const Int_t nDimXMax = 1;
+  const Int_t nDimYMax = 1;
 
   for(Int_t iter = 0; iter < nDimXMax; iter++){
     for(Int_t iter2 = 0; iter2 < nDimYMax; iter2++){
