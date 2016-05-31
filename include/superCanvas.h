@@ -41,6 +41,7 @@ class superCanvas{
   Float_t rowPanelYMin[maxNDimY];
 
   Bool_t panelHasHist[maxNDimX][maxNDimY];
+  Int_t nPanelHists[maxNDimX][maxNDimY];
   Float_t panelWhiteSpace[maxNDimX][maxNDimY][nXYLowHigh];
   Float_t panelWhiteSpaceFrac[maxNDimX][maxNDimY];
   Float_t panelWhiteSpaceFracMax;
@@ -197,6 +198,7 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
       pads_p[iter][iter2]->SetBottomMargin(this->GetBottomMarg(iter2));
 
       panelHasHist[iter][iter2] = false;
+      nPanelHists[iter][iter2] = 0;
     }
   }
 
@@ -367,6 +369,7 @@ void superCanvas::SetPad(TPad* pad_p, const Int_t xPos, const Int_t yPos)
   pad_p->SetBottomMargin(this->GetBottomMarg(yPos));
 
   panelHasHist[xPos][yPos] = false;
+  nPanelHists[xPos][yPos] = 0;
 
   return;
 }
@@ -381,6 +384,7 @@ void superCanvas::SetHist(TH1* hist_p, const Int_t xPos, const Int_t yPos, const
   hists_p[xPos][yPos][histNum] = hist_p;
 
   panelHasHist[xPos][yPos] = true;
+  nPanelHists[xPos][yPos]++;
 
   hists_p[xPos][yPos][histNum]->GetXaxis()->SetNdivisions(505);
   hists_p[xPos][yPos][histNum]->GetYaxis()->SetNdivisions(505);
@@ -475,7 +479,10 @@ void superCanvas::SetHistMaxMin()
 {
   for(Int_t iter = 0; iter < nDimX; iter++){
     for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
-      for(Int_t iter3 = 0; iter3 < nHistPerPanel; iter3++){
+      
+      if(!panelHasHist[iter][iter2]) continue;
+
+      for(Int_t iter3 = 0; iter3 < nPanelHists[iter][iter2]; iter3++){
 
 	if(doGlobalMaxMin){
 	  hists_p[iter][iter2][iter3]->SetMaximum(globalPanelYMax);
@@ -497,6 +504,8 @@ void superCanvas::SetPanelWhiteSpace()
 {
   for(Int_t xPos = 0; xPos < nDimX; xPos++){
     for(Int_t yPos = 0; yPos < nDimY; yPos++){
+
+      if(!panelHasHist[xPos][yPos]) continue;
 
       for(Int_t iter = 0; iter < nXYLowHigh; iter++){
 	panelWhiteSpace[xPos][yPos][iter] = 0;
@@ -599,6 +608,13 @@ void superCanvas::DrawWhiteSpaceLine(const Int_t xPos, const Int_t yPos)
 
 void superCanvas::DrawLegend(TLegend* leg_p)
 {
+  canv_p->cd();
+  pads_p[this->GetPanelWhiteSpaceFracMaxXPos()][this->GetPanelWhiteSpaceFracMaxYPos()]->cd();
+  if(nDimX == 1){ 
+    pads_p[this->GetPanelWhiteSpaceFracMaxXPos()][this->GetPanelWhiteSpaceFracMaxYPos()]->SaveAs("test.ps");
+    std::remove("test.ps");
+  }
+
   leg_p->SetBorderSize(0);
   leg_p->SetFillColor(0);
   leg_p->SetFillStyle(0);
