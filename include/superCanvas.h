@@ -720,13 +720,15 @@ Bool_t superCanvas::isGoodHistVal(const Int_t histNum)
 
 void superCanvas::Clear()
 {
-  delete canv_p;
   delete leg_p;
   for(Int_t iter = 0; iter < nDimX; iter++){
     for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
       delete pads_p[iter][iter2];
     }
   }
+
+  delete canv_p;
+
 
   return;
 }
