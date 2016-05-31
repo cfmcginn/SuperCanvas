@@ -108,6 +108,8 @@ class superCanvas{
   void DrawLegend(TLegend*);
   void DrawLabel1(const Int_t, const Int_t, const std::string);
   void DrawLabel2(const Int_t, const Int_t, const std::string);
+
+  void Clear();
 };
 
 
@@ -605,6 +607,8 @@ void superCanvas::DrawWhiteSpaceLine(const Int_t xPos, const Int_t yPos)
 
   line_p->DrawLine(panelWhiteSpace[xPos][yPos][0], panelWhiteSpace[xPos][yPos][1], panelWhiteSpace[xPos][yPos][0], panelWhiteSpace[xPos][yPos][3]);
 
+  delete line_p;
+
   return;
 }
 
@@ -700,6 +704,19 @@ Bool_t superCanvas::isGoodHistVal(const Int_t histNum)
     return false;
   }
   return true;
+}
+
+
+void superCanvas::Clear()
+{
+  delete canv_p;
+  for(Int_t iter = 0; iter < nDimX; iter++){
+    for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
+      delete pads_p[iter][iter2];
+    }
+  }
+
+  return;
 }
 
 #endif
