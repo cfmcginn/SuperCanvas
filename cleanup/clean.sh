@@ -6,6 +6,7 @@ rest=${path#*$SuperCanvas}
 pos=$(( ${#path} - ${#rest} ))
 path=${path:0:$pos}
 
+rm $path/*~
 rm $path/*.C~
 rm $path/*_C.*
 rm $path/src/*.C~
