@@ -99,6 +99,7 @@ class superCanvas{
   void SetPanelYMaxFactor(const Float_t);
   void MakeHistMaxMinNice();
   void SetHistMaxMin();
+  Int_t GetNPanelHists(const Int_t, const Int_t);
   void SetPanelWhiteSpace();
   Float_t GetPanelWhiteSpaceFracMax();
   Int_t GetPanelWhiteSpaceFracMaxXPos();
@@ -499,6 +500,8 @@ void superCanvas::SetHistMaxMin()
   return;
 }
 
+
+Int_t superCanvas::GetNPanelHists(const Int_t xPos, const Int_t yPos){return nPanelHists[xPos][yPos];}
 
 void superCanvas::SetPanelWhiteSpace()
 {
