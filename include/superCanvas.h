@@ -40,6 +40,8 @@ class superCanvas{
   Float_t rowPanelYMax[maxNDimY];
   Float_t rowPanelYMin[maxNDimY];
 
+  TLegend* leg_p;
+
   Bool_t panelHasHist[maxNDimX][maxNDimY];
   Int_t nPanelHists[maxNDimX][maxNDimY];
   Float_t panelWhiteSpace[maxNDimX][maxNDimY][nXYLowHigh];
@@ -105,7 +107,8 @@ class superCanvas{
   Int_t GetPanelWhiteSpaceFracMaxXPos();
   Int_t GetPanelWhiteSpaceFracMaxYPos();
   void DrawWhiteSpaceLine(const Int_t, const Int_t);
-  void DrawLegend(TLegend*);
+  void DrawLegend();
+  void PrintLegend();
   void DrawLabel1(const Int_t, const Int_t, const std::string);
   void DrawLabel2(const Int_t, const Int_t, const std::string);
 
@@ -188,6 +191,7 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
   }
 
   canv_p = new TCanvas(Form("testCanv_%d_%d_c", nDimX, nDimY), Form("testCanv_%d_%d_c", nDimX, nDimY), this->GetXCanvSize(), this->GetYCanvSize());
+  leg_p = new TLegend(0, 0, 0, 0, "", "");
 
   for(Int_t iter = 0; iter < nDimX; iter++){
     for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
@@ -613,15 +617,11 @@ void superCanvas::DrawWhiteSpaceLine(const Int_t xPos, const Int_t yPos)
 }
 
 
-void superCanvas::DrawLegend(TLegend* leg_p)
+void superCanvas::DrawLegend()
 {
   canv_p->cd();
   pads_p[this->GetPanelWhiteSpaceFracMaxXPos()][this->GetPanelWhiteSpaceFracMaxYPos()]->cd();
-  if(nDimX == 1){ 
-    pads_p[this->GetPanelWhiteSpaceFracMaxXPos()][this->GetPanelWhiteSpaceFracMaxYPos()]->SaveAs("test.ps");
-    std::remove("test.ps");
-  }
-
+  
   leg_p->SetBorderSize(0);
   leg_p->SetFillColor(0);
   leg_p->SetFillStyle(0);
@@ -634,8 +634,19 @@ void superCanvas::DrawLegend(TLegend* leg_p)
   leg_p->SetY1(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][1]);
   leg_p->SetY2(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][3]);
   
+  for(Int_t iter = 0; iter < nPanelHists[0][0]; iter++){
+    leg_p->AddEntry(hists_p[0][0][iter], Form("test %d", iter), "P L");
+  }
+
   leg_p->Draw();
 
+  return;
+}
+
+
+void superCanvas::PrintLegend()
+{
+  leg_p->ls();
   return;
 }
 
@@ -709,13 +720,13 @@ Bool_t superCanvas::isGoodHistVal(const Int_t histNum)
 
 void superCanvas::Clear()
 {
+  delete canv_p;
+  delete leg_p;
   for(Int_t iter = 0; iter < nDimX; iter++){
     for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
       delete pads_p[iter][iter2];
     }
   }
-
-  delete canv_p;
 
   return;
 }
