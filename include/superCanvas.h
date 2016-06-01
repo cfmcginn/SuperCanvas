@@ -11,6 +11,7 @@
 #include "TLine.h"
 #include "TLegend.h"
 #include "TLatex.h"
+#include "TMath.h"
 
 class superCanvas{
  private:
@@ -41,6 +42,7 @@ class superCanvas{
   Float_t rowPanelYMin[maxNDimY];
 
   TLegend* leg_p;
+  std::string legStr[maxNHistPerPanel];
 
   Bool_t columnIsLogX[maxNDimX];
   Bool_t rowIsLogY[maxNDimY];
@@ -48,10 +50,13 @@ class superCanvas{
   Int_t nPanelHists[maxNDimX][maxNDimY];
   Float_t panelWhiteSpace[maxNDimX][maxNDimY][nXYLowHigh];
   Float_t panelWhiteSpaceFrac[maxNDimX][maxNDimY];
-  Float_t panelWhiteSpaceFracMax;
-  Int_t panelWhiteSpaceFracMaxXPos;
-  Int_t panelWhiteSpaceFracMaxYPos;
+  Float_t panelWhiteSpaceXFracMax;
+  Float_t panelWhiteSpaceYFracMax;
+  Float_t panelWhiteSpaceAreaFracMax;
+  Int_t panelWhiteSpaceAreaFracMaxXPos;
+  Int_t panelWhiteSpaceAreaFracMaxYPos;
 
+  Float_t GetLogLinArea(const Float_t, const Float_t, const Float_t, const Float_t, const Bool_t, const Bool_t);
   Bool_t isGoodXVal(const Int_t);
   Bool_t isGoodYVal(const Int_t);
   Bool_t isGoodHistVal(const Int_t);
@@ -99,16 +104,18 @@ class superCanvas{
 
   void SetColumnLogX(const Int_t);
   void SetRowLogY(const Int_t);
-  void SetHist(TH1*, const Int_t, const Int_t, const Int_t);
+  void SetHist(TH1*, const Int_t, const Int_t, const Int_t, const std::string);
   void SetGlobalMaxMin(const Bool_t);
-  void SetPanelYMaxFactor(const Float_t);
+  void SetPanelYMaxFactor(const Float_t, const Float_t);
   void MakeHistMaxMinNice();
   void SetHistMaxMin();
   Int_t GetNPanelHists(const Int_t, const Int_t);
   void SetPanelWhiteSpace();
-  Float_t GetPanelWhiteSpaceFracMax();
-  Int_t GetPanelWhiteSpaceFracMaxXPos();
-  Int_t GetPanelWhiteSpaceFracMaxYPos();
+  Float_t GetPanelWhiteSpaceXFracMax();
+  Float_t GetPanelWhiteSpaceYFracMax();
+  Float_t GetPanelWhiteSpaceAreaFracMax();
+  Int_t GetPanelWhiteSpaceAreaFracMaxXPos();
+  Int_t GetPanelWhiteSpaceAreaFracMaxYPos();
   void DrawWhiteSpaceLine(const Int_t, const Int_t);
   void DrawLegend();
   void PrintLegend();
@@ -161,11 +168,11 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
   if(nDimX >= nDimY){
     xCanvSize = size;
     
-    leftMargSize = xCanvSize/(4*nDimX);
+    leftMargSize = xCanvSize/(8./3*nDimX);
     xPanelSize = (xCanvSize - leftMargSize)/nDimX;
   
     yPanelSize = xPanelSize;
-    bottomMargSize = leftMargSize;
+    bottomMargSize = leftMargSize/1.5;
     yCanvSize = nDimY*yPanelSize+bottomMargSize;
   }
   else{
@@ -174,7 +181,7 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
     yPanelSize = (yCanvSize - bottomMargSize)/nDimY;
     
     xPanelSize = yPanelSize;
-    leftMargSize = bottomMargSize;
+    leftMargSize = bottomMargSize*1.5;
     xCanvSize = nDimX*xPanelSize+leftMargSize;
   }
   
@@ -195,6 +202,10 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
 
   canv_p = new TCanvas(Form("testCanv_%d_%d_c", nDimX, nDimY), Form("testCanv_%d_%d_c", nDimX, nDimY), this->GetXCanvSize(), this->GetYCanvSize());
   leg_p = new TLegend(0, 0, 0, 0, "", "");
+
+  for(Int_t iter = 0; iter < maxNHistPerPanel; iter++){
+    legStr[iter] = "";
+  }
 
   for(Int_t iter = 0; iter < nDimX; iter++){
     for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
@@ -230,9 +241,11 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
     rowPanelYMin[iter] = 100000;
   }
 
-  panelWhiteSpaceFracMax = 0;
-  panelWhiteSpaceFracMaxXPos = -1;
-  panelWhiteSpaceFracMaxYPos = -1;
+  panelWhiteSpaceXFracMax = 0;
+  panelWhiteSpaceYFracMax = 0;
+  panelWhiteSpaceAreaFracMax = 0;
+  panelWhiteSpaceAreaFracMaxXPos = -1;
+  panelWhiteSpaceAreaFracMaxYPos = -1;
 
   return;
 }
@@ -342,7 +355,7 @@ Float_t superCanvas::GetYTitleOffset(const Int_t yPos)
 {
   if(!isGoodYVal(yPos)) return -1;
 
-  Float_t retVal = 1.2*nDimY;
+  Float_t retVal = 1.2*1.3*nDimY;
   return retVal;
 }
 
@@ -365,20 +378,22 @@ Float_t superCanvas::GetYTitleSize(const Int_t yPos)
 {
   if(!isGoodYVal(yPos)) return -1;
 
-  return leftMargSize*1/3.;
+  Float_t size = (leftMargSize*1/3.)/1.5;
+  return size;
 }
 
 Float_t superCanvas::GetYLabelSize(const Int_t yPos)
 {
   if(!isGoodYVal(yPos)) return -1;
 
-  return leftMargSize*1/3.;
+  Float_t size = (leftMargSize*1/3.)/1.5;
+  return size;
 }
 
 
 void superCanvas::SetColumnLogX(const Int_t xPos)
 {
-  if(!isGoodXVal(xPos)) return -1;
+  if(!isGoodXVal(xPos)) return;
 
   for(Int_t iter = 0; iter < nDimY; iter++){
     pads_p[xPos][iter]->SetLogx();
@@ -391,7 +406,7 @@ void superCanvas::SetColumnLogX(const Int_t xPos)
 
 void superCanvas::SetRowLogY(const Int_t yPos)
 {
-  if(!isGoodYVal(yPos)) return -1;
+  if(!isGoodYVal(yPos)) return;
 
   for(Int_t iter = 0; iter < nDimX; iter++){
     pads_p[iter][yPos]->SetLogy();
@@ -403,7 +418,7 @@ void superCanvas::SetRowLogY(const Int_t yPos)
 }
 
 
-void superCanvas::SetHist(TH1* hist_p, const Int_t xPos, const Int_t yPos, const Int_t histNum)
+void superCanvas::SetHist(TH1* hist_p, const Int_t xPos, const Int_t yPos, const Int_t histNum, const std::string histStr = "")
 {
   if(!isGoodXVal(xPos)) return;
   if(!isGoodYVal(yPos)) return;
@@ -448,6 +463,8 @@ void superCanvas::SetHist(TH1* hist_p, const Int_t xPos, const Int_t yPos, const
   hists_p[xPos][yPos][histNum]->SetMarkerColor(histCol[histNum]);
   hists_p[xPos][yPos][histNum]->SetLineColor(histCol[histNum]);
 
+  if(strcmp(histStr.c_str(), "") != 0) legStr[histNum] = histStr;
+
   return;
 }
 
@@ -459,13 +476,19 @@ void superCanvas::SetGlobalMaxMin(const Bool_t doGlobal = true)
 }
 
 
-void superCanvas::SetPanelYMaxFactor(const Float_t factor)
+void superCanvas::SetPanelYMaxFactor(const Float_t factorLin = 1.1, const Float_t factorLog = 5)
 {
-  globalPanelYMax *= factor;
+  Float_t globalFactor = factorLin;
 
   for(Int_t iter = 0; iter < nDimY; iter++){
-    rowPanelYMax[iter] *= factor;
+    if(rowIsLogY[iter]){
+      rowPanelYMax[iter] *= factorLog;
+      globalFactor = factorLog;
+    }
+    else rowPanelYMax[iter] *= factorLin;
   }
+
+  globalPanelYMax *= globalFactor;
 
   return;
 }
@@ -478,7 +501,7 @@ void superCanvas::MakeHistMaxMinNice()
     
     globalPanelYMax += interval/10;
     if(globalPanelYMin - interval/10 > 0) globalPanelYMin -= interval/10;
-    else globalPanelYMin /= 2;
+    else  globalPanelYMin /= 2;
   }
   else{
     globalPanelYMax *= 1.5;
@@ -535,6 +558,9 @@ void superCanvas::SetPanelWhiteSpace()
   for(Int_t xPos = 0; xPos < nDimX; xPos++){
     for(Int_t yPos = 0; yPos < nDimY; yPos++){
 
+      Bool_t isXLog = columnIsLogX[xPos];
+      Bool_t isYLog = rowIsLogY[yPos];
+
       if(!panelHasHist[xPos][yPos]) continue;
 
       for(Int_t iter = 0; iter < nXYLowHigh; iter++){
@@ -565,9 +591,8 @@ void superCanvas::SetPanelWhiteSpace()
 	  if(xVal[iter] < xMin) continue;
 	  if(xVal[iter] > xMax) continue;
 	  
-	  Float_t currentArea = (panelWhiteSpace[xPos][yPos][0] - panelWhiteSpace[xPos][yPos][2])*(panelWhiteSpace[xPos][yPos][1] - panelWhiteSpace[xPos][yPos][3]);
-	  
-	  Float_t tempArea = (xVal[iter] - xMax)*(yVal[iter] - yMax);
+	  Float_t currentArea = this->GetLogLinArea(panelWhiteSpace[xPos][yPos][0], panelWhiteSpace[xPos][yPos][1], panelWhiteSpace[xPos][yPos][2], panelWhiteSpace[xPos][yPos][3], isXLog, isYLog);
+	  Float_t tempArea = this->GetLogLinArea(xVal[iter], yVal[iter], xMax, yMax, isXLog, isYLog);
 	  
 	  if(tempArea > currentArea){
 	    Bool_t changeBool = true;
@@ -600,17 +625,65 @@ void superCanvas::SetPanelWhiteSpace()
 	      panelWhiteSpace[xPos][yPos][3] = yMax;
 	    }
 	  }
+
+	  currentArea = this->GetLogLinArea(panelWhiteSpace[xPos][yPos][0], panelWhiteSpace[xPos][yPos][1], panelWhiteSpace[xPos][yPos][2], panelWhiteSpace[xPos][yPos][3], isXLog, isYLog);
+	  tempArea = this->GetLogLinArea(xMin, yVal[iter], xVal[iter], yMax, isXLog, isYLog);
+
+	  if(tempArea > currentArea){
+	    Bool_t changeBool = true;
+
+	    for(Int_t histIter2 = 0; histIter2 < nHistPerPanel; histIter2++){
+	      const Int_t nBins2 = hists_p[xPos][yPos][histIter2]->GetNbinsX();
+	      Float_t xVal2[nBins2];
+	      Float_t yVal2[nBins2];
+
+	      for(Int_t iter2 = 0; iter2 < nBins2; iter2++){
+		xVal2[iter2] = hists_p[xPos][yPos][histIter2]->GetBinCenter(iter2+1);
+		yVal2[iter2] = hists_p[xPos][yPos][histIter2]->GetBinContent(iter2+1);
+	      }
+	      
+
+	      for(Int_t iter2 = 0; iter2 < nBins2; iter2++){		
+		if(xVal2[iter2] < xVal[iter] && yVal2[iter2] > yVal[iter]){
+		  changeBool = false;
+		  break;
+		}
+	      }
+	      if(!changeBool) break;
+	    }
+	  
+	    if(changeBool){
+	      panelWhiteSpace[xPos][yPos][0] = xMin;
+	      panelWhiteSpace[xPos][yPos][1] = yVal[iter];
+	      
+	      panelWhiteSpace[xPos][yPos][2] = xVal[iter];
+	      panelWhiteSpace[xPos][yPos][3] = yMax;
+	    }
+	  }
+
 	}
       }
       
-      Float_t currentArea = (panelWhiteSpace[xPos][yPos][0] - panelWhiteSpace[xPos][yPos][2])*(panelWhiteSpace[xPos][yPos][1] - panelWhiteSpace[xPos][yPos][3]);
-      Float_t totalArea = (xMin - xMax)*(yMin - yMax);
-      
+      //      Float_t currentArea = (panelWhiteSpace[xPos][yPos][0] - panelWhiteSpace[xPos][yPos][2])*(panelWhiteSpace[xPos][yPos][1] - panelWhiteSpace[xPos][yPos][3]);
+      //      Float_t totalArea = (xMin - xMax)*(yMin - yMax);
+
+      Float_t currentArea = this->GetLogLinArea(panelWhiteSpace[xPos][yPos][0], panelWhiteSpace[xPos][yPos][1], panelWhiteSpace[xPos][yPos][2], panelWhiteSpace[xPos][yPos][3], isXLog, isYLog);
+      Float_t totalArea = this->GetLogLinArea(xMin, yMin, xMax, yMax, isXLog, isYLog);
+     
+      Float_t xLen = (panelWhiteSpace[xPos][yPos][2] - panelWhiteSpace[xPos][yPos][0])/(xMax - xMin);
+      if(isXLog) xLen = (TMath::Log10(panelWhiteSpace[xPos][yPos][2]) - TMath::Log10(panelWhiteSpace[xPos][yPos][0]))/(TMath::Log10(xMax) - TMath::Log10(xMin));
+
+      Float_t yLen = (panelWhiteSpace[xPos][yPos][3] - panelWhiteSpace[xPos][yPos][1])/(yMax - yMin);
+      if(isYLog) yLen = (TMath::Log10(panelWhiteSpace[xPos][yPos][3]) - TMath::Log10(panelWhiteSpace[xPos][yPos][1]))/(TMath::Log10(yMax) - TMath::Log10(yMin));
+
       panelWhiteSpaceFrac[xPos][yPos] = currentArea/totalArea;
-      if(panelWhiteSpaceFracMax < panelWhiteSpaceFrac[xPos][yPos]){
-	panelWhiteSpaceFracMax = panelWhiteSpaceFrac[xPos][yPos];
-	panelWhiteSpaceFracMaxXPos = xPos;
-	panelWhiteSpaceFracMaxYPos = yPos;
+      if(panelWhiteSpaceAreaFracMax < panelWhiteSpaceFrac[xPos][yPos]){
+	panelWhiteSpaceXFracMax = xLen;
+	panelWhiteSpaceYFracMax = yLen;
+
+	panelWhiteSpaceAreaFracMax = panelWhiteSpaceFrac[xPos][yPos];
+	panelWhiteSpaceAreaFracMaxXPos = xPos;
+	panelWhiteSpaceAreaFracMaxYPos = yPos;
       }
     }
   }
@@ -618,9 +691,11 @@ void superCanvas::SetPanelWhiteSpace()
   return;
 }
 
-Float_t superCanvas::GetPanelWhiteSpaceFracMax(){return panelWhiteSpaceFracMax;}
-Int_t superCanvas::GetPanelWhiteSpaceFracMaxXPos(){return panelWhiteSpaceFracMaxXPos;}
-Int_t superCanvas::GetPanelWhiteSpaceFracMaxYPos(){return panelWhiteSpaceFracMaxYPos;}
+Float_t superCanvas::GetPanelWhiteSpaceXFracMax(){return panelWhiteSpaceXFracMax;}
+Float_t superCanvas::GetPanelWhiteSpaceYFracMax(){return panelWhiteSpaceYFracMax;}
+Float_t superCanvas::GetPanelWhiteSpaceAreaFracMax(){return panelWhiteSpaceAreaFracMax;}
+Int_t superCanvas::GetPanelWhiteSpaceAreaFracMaxXPos(){return panelWhiteSpaceAreaFracMaxXPos;}
+Int_t superCanvas::GetPanelWhiteSpaceAreaFracMaxYPos(){return panelWhiteSpaceAreaFracMaxYPos;}
 
 void superCanvas::DrawWhiteSpaceLine(const Int_t xPos, const Int_t yPos)
 {
@@ -641,24 +716,26 @@ void superCanvas::DrawWhiteSpaceLine(const Int_t xPos, const Int_t yPos)
 void superCanvas::DrawLegend()
 {
   canv_p->cd();
-  pads_p[this->GetPanelWhiteSpaceFracMaxXPos()][this->GetPanelWhiteSpaceFracMaxYPos()]->cd();
+  pads_p[this->GetPanelWhiteSpaceAreaFracMaxXPos()][this->GetPanelWhiteSpaceAreaFracMaxYPos()]->cd();
   
+  for(Int_t iter = 0; iter < maxNHistPerPanel; iter++){
+    if(!strcmp(legStr[iter].c_str(), "")) continue;
+
+    else leg_p->AddEntry(hists_p[0][0][iter], legStr[iter].c_str(), "P L");
+  }
+
   leg_p->SetBorderSize(0);
   leg_p->SetFillColor(0);
   leg_p->SetFillStyle(0);
   leg_p->SetTextFont(43);
-  leg_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceFracMaxXPos));
+  leg_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceAreaFracMaxXPos));
 
-  leg_p->SetX1(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][0]);
-  leg_p->SetX2(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][2]);
+  leg_p->SetX1(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][0]);
+  leg_p->SetX2(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][2]);
 
-  leg_p->SetY1(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][1]);
-  leg_p->SetY2(panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][3]);
+  leg_p->SetY1(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][1]);
+  leg_p->SetY2(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][3]);
   
-  for(Int_t iter = 0; iter < nPanelHists[0][0]; iter++){
-    leg_p->AddEntry(hists_p[0][0][iter], Form("test %d", iter), "P L");
-  }
-
   leg_p->Draw();
 
   return;
@@ -676,13 +753,13 @@ void superCanvas::DrawLabel1(const Int_t xPos, const Int_t yPos, const std::stri
 {
   TLatex* label1_p = new TLatex();
   label1_p->SetTextFont(43);
-  label1_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceFracMaxXPos));
+  label1_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceAreaFracMaxXPos));
 
 
-  Float_t xCanvPos = panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][0];
+  Float_t xCanvPos = panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][0];
 
-  Float_t yCanvPos = panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][3] - panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][1];
-  yCanvPos = panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][1] + yCanvPos*2./3;
+  Float_t yCanvPos = panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][3] - panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][1];
+  yCanvPos = panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][1] + yCanvPos*2./3;
 
   label1_p->DrawLatex(xCanvPos, yCanvPos, inStr.c_str());
   
@@ -696,17 +773,36 @@ void superCanvas::DrawLabel2(const Int_t xPos, const Int_t yPos, const std::stri
 {
   TLatex* label2_p = new TLatex();
   label2_p->SetTextFont(43);
-  label2_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceFracMaxXPos));
+  label2_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceAreaFracMaxXPos));
 
-  Float_t xCanvPos = panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][0];
-  Float_t yCanvPos = panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][3] - panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][1];
-  yCanvPos = panelWhiteSpace[panelWhiteSpaceFracMaxXPos][panelWhiteSpaceFracMaxYPos][1] + yCanvPos*1./3;
+  Float_t xCanvPos = panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][0];
+  Float_t yCanvPos = panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][3] - panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][1];
+  yCanvPos = panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][1] + yCanvPos*1./3;
 
   label2_p->DrawLatex(xCanvPos, yCanvPos, inStr.c_str());
   
   delete label2_p;
 
   return;
+}
+
+
+Float_t superCanvas::GetLogLinArea(const Float_t x1, const Float_t y1, const Float_t x2, const Float_t y2, const Bool_t isLogX, const Bool_t isLogY)
+{
+  Float_t area = -1;
+  Float_t xLen = 0;
+  Float_t yLen = 0;
+
+  if(isLogX && (x1 == 0 || x2 == 0)) return 0;
+  if(isLogY && (y1 == 0 || y2 == 0)) return 0;
+
+  if(isLogX) xLen = TMath::Log10(x2) - TMath::Log10(x1);
+  else xLen = x2 - x1;
+
+  if(isLogY) yLen = TMath::Log10(y2) - TMath::Log10(y1);
+  else yLen = y2 - y1;
+
+  return xLen*yLen;
 }
 
 
