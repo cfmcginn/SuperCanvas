@@ -789,7 +789,6 @@ void superCanvas::DrawLabel2(const Int_t xPos, const Int_t yPos, const std::stri
 
 Float_t superCanvas::GetLogLinArea(const Float_t x1, const Float_t y1, const Float_t x2, const Float_t y2, const Bool_t isLogX, const Bool_t isLogY)
 {
-  Float_t area = -1;
   Float_t xLen = 0;
   Float_t yLen = 0;
 

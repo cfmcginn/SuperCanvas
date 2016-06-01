@@ -141,7 +141,7 @@ void testDefineCanv(const Int_t nDimX, const Int_t nDimY)
   }
 
   Int_t searchIter = 0;
-  while(padPos_p->GetPanelWhiteSpaceFracMax() < .25){
+  while(padPos_p->GetPanelWhiteSpaceAreaFracMax() < .25 || padPos_p->GetPanelWhiteSpaceXFracMax() < .5 || padPos_p->GetPanelWhiteSpaceYFracMax() < .5){
     padPos_p->SetPanelYMaxFactor(1.1);
     padPos_p->MakeHistMaxMinNice();
     padPos_p->SetHistMaxMin();
