@@ -35,6 +35,10 @@ class superCanvas{
 
   Bool_t doGlobalMaxMin;
 
+  Bool_t doGlobalCap;
+  Float_t globalMaxCap;
+  Float_t globalMinCap;
+
   Float_t globalPanelYMax;
   Float_t globalPanelYMin;
 
@@ -106,6 +110,7 @@ class superCanvas{
   void SetRowLogY(const Int_t);
   void SetHist(TH1*, const Int_t, const Int_t, const Int_t, const std::string);
   void SetGlobalMaxMin(const Bool_t);
+  void CapGlobalMaxMin(const Float_t, const Float_t);
   void SetPanelYMaxFactor(const Float_t, const Float_t);
   void MakeHistMaxMinNice();
   void SetHistMaxMin();
@@ -117,6 +122,7 @@ class superCanvas{
   Int_t GetPanelWhiteSpaceAreaFracMaxXPos();
   Int_t GetPanelWhiteSpaceAreaFracMaxYPos();
   void DrawWhiteSpaceLine(const Int_t, const Int_t);
+  void DrawGlobalHorizontalLine(const Float_t);
   void DrawLegend();
   void PrintLegend();
   void DrawLabel1(const Int_t, const Int_t, const std::string);
@@ -232,6 +238,10 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
   }
 
   doGlobalMaxMin = false;
+
+  doGlobalCap = false;
+  globalMaxCap = -100000;
+  globalMinCap = 100000;
 
   globalPanelYMax = -100000;
   globalPanelYMin = 100000;
@@ -422,7 +432,10 @@ void superCanvas::SetHist(TH1* hist_p, const Int_t xPos, const Int_t yPos, const
 {
   if(!isGoodXVal(xPos)) return;
   if(!isGoodYVal(yPos)) return;
-  if(!isGoodHistVal(histNum)) return;
+  if(!isGoodHistVal(histNum)){
+    std::cout << "Hist Name is \'" << hist_p->GetName() << "\'." << std::endl;
+    return;
+  }
 
   hists_p[xPos][yPos][histNum] = hist_p;
 
@@ -472,6 +485,16 @@ void superCanvas::SetHist(TH1* hist_p, const Int_t xPos, const Int_t yPos, const
 void superCanvas::SetGlobalMaxMin(const Bool_t doGlobal = true)
 {
   doGlobalMaxMin = doGlobal;
+  return;
+}
+
+void superCanvas::CapGlobalMaxMin(const Float_t max, const Float_t min)
+{
+  doGlobalCap = true;
+
+  globalMaxCap = max;
+  globalMinCap = min;
+
   return;
 }
 
@@ -536,8 +559,14 @@ void superCanvas::SetHistMaxMin()
       for(Int_t iter3 = 0; iter3 < nPanelHists[iter][iter2]; iter3++){
 
 	if(doGlobalMaxMin){
-	  hists_p[iter][iter2][iter3]->SetMaximum(globalPanelYMax);
-	  hists_p[iter][iter2][iter3]->SetMinimum(globalPanelYMin);
+	  if(doGlobalCap){
+	    hists_p[iter][iter2][iter3]->SetMaximum(TMath::Min(globalPanelYMax, globalMaxCap));
+	    hists_p[iter][iter2][iter3]->SetMinimum(TMath::Max(globalPanelYMin, globalMinCap));
+	  }
+	  else{
+	    hists_p[iter][iter2][iter3]->SetMaximum(globalPanelYMax);
+            hists_p[iter][iter2][iter3]->SetMinimum(globalPanelYMin);
+	  }
 	}
 	else{
 	  hists_p[iter][iter2][iter3]->SetMaximum(rowPanelYMax[iter2]);
@@ -710,6 +739,51 @@ void superCanvas::DrawWhiteSpaceLine(const Int_t xPos, const Int_t yPos)
   delete line_p;
 
   return;
+}
+
+
+void superCanvas::DrawGlobalHorizontalLine(const Float_t yVal)
+{
+  if(!doGlobalMaxMin){
+    std::cout << "Max/min not global, no line drawn." << std::endl;
+    return;
+  }
+
+  if(doGlobalCap){
+    if(yVal > globalMaxCap){
+      std::cout << "yVal \'" << yVal << "\' greater than globalMaxCap, \'" << globalMaxCap << "\', no line drawn." << std::endl;
+      return;
+    }
+    if(yVal < globalMinCap){
+      std::cout << "yVal \'" << yVal << "\' less than globalMinCap, \'" << globalMinCap << "\', no line drawn." << std::endl;
+      return;
+    }
+  }
+  else{
+    if(yVal > globalPanelYMax){
+      std::cout << "yVal \'" << yVal << "\' greater than globalPanelYMax, \'" << globalPanelYMax << "\', no line drawn." << std::endl;
+      return;
+    }
+    if(yVal < globalPanelYMin){
+      std::cout << "yVal \'" << yVal << "\' less than globalPanelYMin, \'" << globalPanelYMin << "\', no line drawn." << std::endl;
+      return;
+    }
+  }
+
+
+  TLine* line_p = new TLine();
+  line_p->SetLineStyle(2);
+
+  for(Int_t iter = 0; iter < nDimX; iter++){
+    for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
+      canv_p->cd();
+      pads_p[iter][iter2]->cd();
+
+      line_p->DrawLine(hists_p[iter][iter2][0]->GetBinLowEdge(1), yVal, hists_p[iter][iter2][0]->GetBinLowEdge(hists_p[iter][iter2][0]->GetNbinsX()+1), yVal);
+    }
+  }
+  
+  delete line_p;
 }
 
 
