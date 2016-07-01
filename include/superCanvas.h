@@ -67,8 +67,8 @@ class superCanvas{
 
  public:
   superCanvas();
-  superCanvas(const Int_t, const Int_t, const Int_t, const Float_t);
-  void SetCanvVals(const Int_t, const Int_t, const Int_t, const Float_t);
+  superCanvas(const Int_t, const Int_t, const Int_t, const Float_t,  const std::string);
+  void SetCanvVals(const Int_t, const Int_t, const Int_t, const Float_t, const std::string);
   Int_t GetNDimX();
   Int_t GetNDimY();
   Float_t GetXCanvSize();
@@ -134,18 +134,18 @@ class superCanvas{
 
 superCanvas::superCanvas()
 {
-  SetCanvVals(1, 1, 1, 1000);
+  SetCanvVals(1, 1, 1, 1000, "");
   return;
 }
 
 
-superCanvas::superCanvas(const Int_t dimX, const Int_t dimY, const Int_t histPerPanel = 1, const Float_t size = 1000)
+superCanvas::superCanvas(const Int_t dimX, const Int_t dimY, const Int_t histPerPanel = 1, const Float_t size = 1000, const std::string idStr = "")
 {
-  SetCanvVals(dimX, dimY, histPerPanel, size);
+  SetCanvVals(dimX, dimY, histPerPanel, size, idStr);
   return;
 }
 
-void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t histPerPanel, const Float_t size = 1000)
+void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t histPerPanel, const Float_t size = 1000, const std::string idStr = "")
 {
   if(dimX > maxNDimX){
     std::cout << "Number of input dimensions \'" << nDimX << "\' exceed maximum, \'" << maxNDimX << "\'. Setting to max." << std::endl;
@@ -206,7 +206,10 @@ void superCanvas::SetCanvVals(const Int_t dimX, const Int_t dimY, const Int_t hi
     panelPixelsX[0][iter2] += leftMargSize;
   }
 
-  canv_p = new TCanvas(Form("testCanv_%d_%d_c", nDimX, nDimY), Form("testCanv_%d_%d_c", nDimX, nDimY), this->GetXCanvSize(), this->GetYCanvSize());
+  std::string tempStr = "";
+  if(idStr.size() != 0) tempStr = "_" + idStr;
+
+  canv_p = new TCanvas(Form("testCanv_%d_%d%s_c", nDimX, nDimY, tempStr.c_str()), Form("testCanv_%d_%d%s_c", nDimX, nDimY, tempStr.c_str()), this->GetXCanvSize(), this->GetYCanvSize());
   leg_p = new TLegend(0, 0, 0, 0, "", "");
 
   for(Int_t iter = 0; iter < maxNHistPerPanel; iter++){
