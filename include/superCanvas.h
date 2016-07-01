@@ -39,6 +39,10 @@ class superCanvas{
   Float_t globalMaxCap;
   Float_t globalMinCap;
 
+  Bool_t doGlobalUnderCap;
+  Float_t globalMaxUnderCap;
+  Float_t globalMinUnderCap;
+
   Float_t globalPanelYMax;
   Float_t globalPanelYMin;
 
@@ -111,6 +115,7 @@ class superCanvas{
   void SetHist(TH1*, const Int_t, const Int_t, const Int_t, const std::string);
   void SetGlobalMaxMin(const Bool_t);
   void CapGlobalMaxMin(const Float_t, const Float_t);
+  void UnderCapGlobalMaxMin(const Float_t, const Float_t);
   void SetPanelYMaxFactor(const Float_t, const Float_t);
   void MakeHistMaxMinNice();
   void SetHistMaxMin();
@@ -501,6 +506,16 @@ void superCanvas::CapGlobalMaxMin(const Float_t max, const Float_t min)
   return;
 }
 
+void superCanvas::UnderCapGlobalMaxMin(const Float_t max, const Float_t min)
+{
+  doGlobalUnderCap = true;
+
+  globalMaxUnderCap = max;
+  globalMinUnderCap = min;
+
+  return;
+}
+
 
 void superCanvas::SetPanelYMaxFactor(const Float_t factorLin = 1.1, const Float_t factorLog = 5)
 {
@@ -562,14 +577,20 @@ void superCanvas::SetHistMaxMin()
       for(Int_t iter3 = 0; iter3 < nPanelHists[iter][iter2]; iter3++){
 
 	if(doGlobalMaxMin){
+	  Float_t tempMax = globalPanelYMax;
+	  Float_t tempMin = globalPanelYMin;
+
 	  if(doGlobalCap){
-	    hists_p[iter][iter2][iter3]->SetMaximum(TMath::Min(globalPanelYMax, globalMaxCap));
-	    hists_p[iter][iter2][iter3]->SetMinimum(TMath::Max(globalPanelYMin, globalMinCap));
+	    tempMax = TMath::Min(tempMax, globalMaxCap);
+	    tempMin = TMath::Max(tempMin, globalMinCap);
 	  }
-	  else{
-	    hists_p[iter][iter2][iter3]->SetMaximum(globalPanelYMax);
-            hists_p[iter][iter2][iter3]->SetMinimum(globalPanelYMin);
+	  if(doGlobalUnderCap){
+	    tempMax = TMath::Max(tempMax, globalMaxUnderCap);
+            tempMin = TMath::Min(tempMin, globalMinUnderCap);
 	  }
+
+	  hists_p[iter][iter2][iter3]->SetMaximum(tempMax);
+	  hists_p[iter][iter2][iter3]->SetMinimum(tempMin);
 	}
 	else{
 	  hists_p[iter][iter2][iter3]->SetMaximum(rowPanelYMax[iter2]);
@@ -782,7 +803,7 @@ void superCanvas::DrawGlobalHorizontalLine(const Float_t yVal)
       canv_p->cd();
       pads_p[iter][iter2]->cd();
 
-      line_p->DrawLine(hists_p[iter][iter2][0]->GetBinLowEdge(1), yVal, hists_p[iter][iter2][0]->GetBinLowEdge(hists_p[iter][iter2][0]->GetNbinsX()+1), yVal);
+      line_p->DrawLine(hists_p[iter][iter2][0]->GetXaxis()->GetBinLowEdge(1), yVal, hists_p[iter][iter2][0]->GetXaxis()->GetBinUpEdge(hists_p[iter][iter2][0]->GetNbinsX()+1), yVal);
     }
   }
   
@@ -807,7 +828,7 @@ void superCanvas::DrawLegend()
   leg_p->SetTextFont(43);
   leg_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceAreaFracMaxXPos));
 
-  leg_p->SetX1(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][0]);
+  leg_p->SetX1((panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][0] + panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][2])/2);
   leg_p->SetX2(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][2]);
 
   leg_p->SetY1(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][1]);
