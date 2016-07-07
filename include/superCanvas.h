@@ -128,6 +128,7 @@ class superCanvas{
   Int_t GetPanelWhiteSpaceAreaFracMaxYPos();
   void DrawWhiteSpaceLine(const Int_t, const Int_t);
   void DrawGlobalHorizontalLine(const Float_t);
+  void DrawGlobalVerticalLine(const Float_t);
   void DrawLegend();
   void PrintLegend();
   void DrawLabel1(const Int_t, const Int_t, const std::string);
@@ -811,6 +812,24 @@ void superCanvas::DrawGlobalHorizontalLine(const Float_t yVal)
 }
 
 
+void superCanvas::DrawGlobalVerticalLine(const Float_t xVal)
+{
+  TLine* line_p = new TLine();
+  line_p->SetLineStyle(2);
+
+  for(Int_t iter = 0; iter < nDimX; iter++){
+    for(Int_t iter2 = 0; iter2 < nDimY; iter2++){
+      canv_p->cd();
+      pads_p[iter][iter2]->cd();
+      
+      line_p->DrawLine(xVal, hists_p[iter][iter2][0]->GetMinimum(), xVal, hists_p[iter][iter2][0]->GetMaximum());
+    }
+  }
+  
+  delete line_p;
+}
+
+
 void superCanvas::DrawLegend()
 {
   canv_p->cd();
@@ -828,7 +847,7 @@ void superCanvas::DrawLegend()
   leg_p->SetTextFont(43);
   leg_p->SetTextSize(this->GetXLabelSize(panelWhiteSpaceAreaFracMaxXPos));
 
-  leg_p->SetX1((panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][0] + panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][2])/2);
+  leg_p->SetX1((panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][0] + panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][2])*2/5);
   leg_p->SetX2(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][2]);
 
   leg_p->SetY1(panelWhiteSpace[panelWhiteSpaceAreaFracMaxXPos][panelWhiteSpaceAreaFracMaxYPos][1]);
